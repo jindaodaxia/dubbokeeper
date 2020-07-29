@@ -2,6 +2,8 @@ package com.dubboclub.dk.admin.service.impl;
 
 import com.alibaba.dubbo.common.Constants;
 import com.alibaba.dubbo.common.URL;
+import com.alibaba.dubbo.common.logger.Logger;
+import com.alibaba.dubbo.common.logger.LoggerFactory;
 import com.alibaba.dubbo.monitor.MonitorService;
 import com.dubboclub.dk.admin.model.Application;
 import com.dubboclub.dk.admin.model.Consumer;
@@ -11,7 +13,6 @@ import com.dubboclub.dk.admin.service.AbstractService;
 import com.dubboclub.dk.admin.service.ApplicationService;
 import com.dubboclub.dk.admin.service.ConsumerService;
 import com.dubboclub.dk.admin.service.ProviderService;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +26,8 @@ public class ApplicationServiceImpl extends AbstractService implements Applicati
     private ProviderService providerService;
 
     private ConsumerService consumerService;
+    
+    private static final Logger logger = LoggerFactory.getLogger(ApplicationServiceImpl.class);
 
     @Override
     public List<Application> getApplications() {
@@ -51,9 +54,15 @@ public class ApplicationServiceImpl extends AbstractService implements Applicati
                 //某个服务的所有地址，一个服务可能会被多个应用消费
                 Map<Long, URL> urls = oneService.getValue();
                 for(Map.Entry<Long,URL> url:urls.entrySet()){
+                	URL urlValue = url.getValue();
+                	if(urlValue == null ||  (urlValue.getParameter(Constants.INTERFACE_KEY)== null)) {
+                		continue;
+                	}
                     if(url.getValue().getParameter(Constants.INTERFACE_KEY).equals(MonitorService.class.getName())){
                         continue;
                     }
+                    
+                    logger.info("url:" + urlValue.toString());
                     Application application = new Application();
                     application.setApplication(url.getValue().getParameter(Constants.APPLICATION_KEY));
                     application.setUsername(url.getValue().getParameter("owner"));
